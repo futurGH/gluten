@@ -97,7 +97,11 @@ module IO_loop = struct
         | `Write io_vectors ->
           writev io_vectors >>= fun result ->
           Runtime.report_write_result t result;
-          write_loop_step ()
+          (* added check to exit loop on EPIPE  *)
+          if result != `Closed then
+              write_loop_step ()
+          else
+            Lwt.return_unit
         | `Yield ->
           Runtime.yield_writer t write_loop;
           Lwt.return_unit
